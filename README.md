@@ -5,6 +5,25 @@ An empty project with all the boilerplate to start developing with stm32f4.
 
 Change the output file name in app/module.mk
 
+Grab the project with:
+	git clone file:///path/to/repo/
+
+Cloning will bring over the remotes specified in that directory. So you'll need to remove the remotes you don't want.
+
+	git remote rm <remote>
+
+And add the ones you do, after you have created your remote repository.
+
+	git remote add origin <url>
+
+You will also want to --set-upstream-to, or -u to tell git this is the remote repository this branch will update to, presuming you are on the master branch.
+
+	git push -u origin master
+
+Then you'll need to decide which branches to keep and add to the remote. If you want to push all of them, just do git push --mirror. This will push all your tags and your remotes. But since we edited your remotes in an earlier step, it shouldn't be a problem.
+
+If you only want to keep a few, you can git push -u origin <branch> each one you want.
+
 Install a few packages to make everything work
 ---
 
