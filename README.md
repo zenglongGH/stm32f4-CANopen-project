@@ -3,7 +3,13 @@ stm32f4-empty-project
 
 An empty project with all the boilerplate to start developing with stm32f4.
 
-Change the output file name is app/module.mk
+Change the output file name in app/module.mk
+
+Install a few packages to make everything work
+---
+
+    sudo apt-get install flex bison libgmp3-dev libmpfr-dev libncurses5-dev libmpc-dev autoconf texinfo build-essential libftdi-dev libexpat1 libexpat1-dev
+
 
 Install the arm-gcc toolchain
 ---
