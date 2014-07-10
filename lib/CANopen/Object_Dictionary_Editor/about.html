@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <title>About - CANopenNode Editor</title>
+</head>
+<body>
+	<h3>Introduction to Object Dictionary Editor</h3>
+	<p>CANopen Object dictionary is a collection of all the data items inside one device, which are accessible via CANopen network. Data items have  specific type, for example UNSIGNED8, INTEGER32, VISIBLE_STRING, RECORD(structure in C), ARRAY, etc. Each data item within the object dictionary is addressed using a 16-bit index and an 8-bit sub-index.</p>
+   <p>Objec dictionary editor is used for editing and creation of CANopenNode project specific files. Main project file is an XML file - device description file - <b>_project.xml</b>. It contains all CANopen specific information about one device. For example, it contains all the information, which are usually present in Electronic Data Sheel (EDS) file + much more. Other files created from device description file are: CANopen <b>EDS file</b>, <b>HTML file</b> as documentation and two C language files: <b>CO_OD.h</b> and <b>CO_OD.c</b>.</p>
+	<p>Objec dictionary editor is a web application. Currently it has a little uncommon user interface. After files are created, they must be copy/pasted to regular text editor (notepad) and saved from there. Web application does not allow saving files directly.</p>
+	<br/>
+   <p><b>Prerequisites:</b>
+   <ul>
+      <li>Mozilla Firefox.</li>
+      <li>If Firefox version is 4 or higher, following add-on must be installed: <a href="https://addons.mozilla.org/en-US/firefox/addon/remote-xul-manager/">Remote-xul-manager</a></li>
+      <li>After installation and restart, go to Developer submenu, Remote XUL Manager. Click Add, write "&lt;file&gt;" in textbox and click OK.</li>
+   </ul>
+   </p>
+	<br/>
+   <p><b>Usage:</b>
+   <ul>
+      <li>Open "_project.html" in Firefox.</li>
+      <li>First textbox is loaded with the contents of "_project.xml" file (device description XML file).</li>
+      <li>Click "Open Editor".</li>
+      <li>Use the editor.</li>
+      <li>Click "Generate all files and return".</li>
+      <li>After a while (on some computers it may take some more) returns the previous screen with six filled textboxes.</li>
+      <li>Copy - Paste the text from textboxes into appropriate files. Don't forget copying the first textbox into the "_project.xml" file.</li>
+   </ul>
+   </p>
+   <br/>
+   <p><b>CANopenNode Device description file format</b> is specific for CANopenNode. Its body contain the following nodes:
+	<ol>
+		<li><b>Features</b> - Features must be edited, before Objects. For example, if the number of RPDO is changed, corresponding objects (0x1400+ and 0x1600+) are added or removed automatically.</li>
+		<li><b>Objects</b> - Objects from Device Object Dictionary. If '<img src="pict/disabled.png"/>' is in the front of the index, it means that Object is disabled and won't be included in output files. However, CANopenNode Device description file will contain those objects.</li>
+		<li><b>Other</b> - Other information about the device.</li>
+	</ol>
+	</p>
+</body>
+</html>

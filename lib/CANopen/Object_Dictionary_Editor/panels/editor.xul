@@ -1,0 +1,47 @@
+﻿<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+				xmlns:html="http://www.w3.org/1999/xhtml">
+
+
+<vbox flex="1" style="overflow: auto">
+
+	<html xmlns="http://www.w3.org/1999/xhtml" style="background-color: white; font-family: serif; font-size: medium">
+		<h3>Introduction to Object Dictionary editor</h3>
+		<p>With this editor you can edit CANopenNode Device description files. Device description file is an XML file, which contains all CANopen specific information about one device. For example, it contains all the information, which are usually present in Electronic Data Sheel (EDS) file + much more.</p>
+		<p>This is a web application, so it differs a little from classical desktop application. Web applications runs inside web browser and for security reasons it has no direct access to local file system. So user must handle opening and saving files a little different.</p>
+		<p>If you want to start new project, press 'New Project ...' button, then there are three possibilities:
+			<ul>
+				<li><b>Use one of the templates</b> - template located on the web server will load into application.</li>
+				<li><b>Paste project file text</b> - First open your XML Device description file in your text editor, then select all (ctrl+a) text and copy (ctrl+c) it to the clipboard. Then paste (ctrl+v) the contents into text field in web application and press 'Import Project' button. This is the only way to use Device description files located on your computer.</li>
+				<li><b>Load file from server</b> - If you know for the another Device description file on server, you can type the name.</li>
+			</ul>
+		</p>
+		<p>If Device description file is successfully loaded, then tree is generated on the left side. You can choose any object from there. In the right window will appear the user inderface with objects data. For different type of object,  different user interface is shown. There you can edit all properties of the object. Button with icon <img src="pict/question.png"/> inside means, that you can edit label for that object. Label includes Name, Description and URI for one language. There can be more languages simultaneously.</p>
+		<p>If you want to save curent (and edited) Device description file into your computer, there is one possibility: Press the 'Show Device description file' button. All the XML code will be shown in text field. then select all (ctrl+a) text and copy (ctrl+c) it to the clipboard. After that open your text editor, begin new file and paste (ctrl+v) the contents. You can then save the file on your computer. A good practice is to save Device description file occasionally.</p>
+		<p>After all objects are properly configured, Click the button 'Validate and generate all output files'. The following files will be generated in a separate window:
+				<ul>
+					<li><b>CANopenNode Device description file</b> - this is the file, you are editing. <b>It must be saved.</b></li>
+					<li><b>CO_OD.h file</b> - Header file for Object Dictionary - for CANopenNode stack.</li>
+					<li><b>CO_OD.c file</b> - Definition file for Object Dictionary - for CANopenNode stack.</li>
+					<li><b>EDS specification file</b> - Electronic data sheet for CANopen device - according to CiA DS 306 standard.</li>
+					<li><b>XDD specification file</b> - CANopen device description in XML format for CANopen device - according to CiA DSP 311 standard.</li>
+					<li><b>Documentation source</b> - Complete device description in HTML format - HTML source.</li>
+					<li><b>Documentation view</b> - Same documentation displayed in browser window.</li>
+				</ul>
+				CANopenNode Device description file is the main file, which contains all the information. All other files are extracted from it. (Documentation files also include some external files from the doc folder.)</p>
+		<p><b>And remember: don't press the refresh, back or forward buttons! You can lose all your changes.</b></p>
+		<br/>
+		<p>CANopenNode Device description file format is specific for CANopenNode. Its body contains following nodes, which you can see in the left window:
+		<ol>
+			<li><b>Features</b> - Features must be edited, before Objects. For example, if you change the number of RPDO, corresponding objects (0x1400+ and 0x1600+) will be added or removed automatically.</li>
+			<li><b>Objects</b> - Objects from Device Object Dictionary. If '<img src="pict/disabled.png"/>' is in the front of the index, it means that Object is disabled and won't be included in output files. However, CANopenNode Device description file will contain those objects too. That makes creation of new objects easier.</li>
+			<li><b>Other</b> - Other information about the device.</li>
+		</ol>
+		</p>
+		<br/>
+	</html>
+
+</vbox>
+</window>

@@ -13,6 +13,8 @@ include_dirs += app/inc/periphs
 include_dirs += lib/CMSIS/Include 
 include_dirs += lib/CMSIS/Device/ST/STM32F4xx/Include
 include_dirs += lib/STM32F4xx_StdPeriph_Driver/inc
+include_dirs += lib/CANopen/inc
+include_dirs += lib/CANopen/inc/STM32
 
 library_dirs := lib
 
@@ -43,6 +45,7 @@ LPATHS        = $(addprefix -L,$(library_dirs))
 # Include make modules
 
 all:
+include lib/CANopen/module.mk
 include lib/STM32F4xx_StdPeriph_Driver/module.mk
 include app/module.mk
 

@@ -1,0 +1,570 @@
+﻿<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<!-- This application only works in Mozilla Firefox 2.0 or above -->
+
+<!-- *******************************************************************************
+
+	device.xul - User interface for CANopenNode device configurator
+
+	Copyright (C) 2007  Janez Paternoster, Slovenia
+
+	This library is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public
+	License as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+
+	This library is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
+
+	You should have received a copy of the GNU Lesser General Public
+	License along with this library; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+	Author: janez.paternoster@siol.net
+
+******************************************************************************* -->
+
+<window title="CANopenNode" width="1024" height="768" onload="g_init();" onunload="g_close();"
+				xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+				xmlns:html="http://www.w3.org/1999/xhtml">
+
+
+<script src="device.js"/>
+<script src="panels.js"/>
+<script src="util.js"/>
+<script src="output.js"/>
+
+<hbox flex="1">
+<vbox id="g_leftWindow" width="235" persist="width">
+
+	<hbox align="center">
+		<checkbox id="g_hideDisabledObjectsCheckbox" checked ="false" persist="checked" oncommand="if(g_project) g_createTree();"/>
+		<label value="Hide disabled objects"/>
+	</hbox>
+
+	<tree id="g_deviceTree" flex="1" seltype="single" hidecolumnpicker="true" onselect="g_treeSelected(this);">
+		<treecols>
+			<treecol id="g_treeObjectIndex" flex="1" label="Index" primary="true"/>
+			<treecol id="g_treeObjectName" flex="2" label="Name"/>
+		</treecols>
+
+		<treechildren id="g_deviceTreeChildren"/>
+	</tree>
+	
+</vbox>
+
+<splitter collapse="none"/>
+
+<vbox flex="1" style="margin-left: 5px">
+	<groupbox id="g_rightTopWindow">
+		<caption label="Edit Object Dictionary"/>
+		<hbox frameName="modeEdit" align="center">
+			<vbox>
+				<hbox align="center">
+					<label value="File Name:"/>
+					<textbox id="g_fileNameField" onchange="if(g_project){g_project.other.file.@fileName = this.value; document.title = this.value + ' - CANopenNode';} else this.value=''"/>
+				</hbox>
+				<hbox align="center">
+					<label value="Creator:"/>
+					<textbox style="width: 6em;" id="g_fileCreatorField" onchange="if(g_project) g_project.other.file.@fileCreator = this.value; else this.value=''"/>
+					<label value="Ver:"/>
+					<textbox style="width: 3em;" id="g_fileVersionField" onchange="if(g_project) g_project.other.file.@fileVersion = this.value; else this.value=''"/>
+				</hbox>
+			</vbox>
+			<spacer width="20"/>
+			<button orient="vertical" oncommand="SaveProjectAndReturn();">
+				<label value="Save project"/>
+				<label value="and return"/>
+			</button>
+			<spacer width="20"/>
+			<button orient="vertical" oncommand="generateFilesAndReturn();">
+				<label value="Generate files"/>
+				<label value="and return"/>
+			</button>
+			<spacer flex="1"/>
+			<button oncommand="var w=window.open('about.html','About','left=0,top=150,height=600,width=800,resizable=yes,scrollbars=yes,location=yes,status=yes'); w.focus();">
+				<label value="Help"/>
+			</button>
+		</hbox>
+	</groupbox>
+
+	<hbox flex="1">
+		<vbox id="g_rightBottomWindow" flex="1" style="margin-left: 5px">
+			<!-- **********PANELS *********************************************************************************************** -->
+			<!-- ***** g_panelBlank ***** -->
+			<hbox id="g_panelBlank" frameName="g_panelBlank" hidden="true"/>
+			<!-- ***** g_panelLoading ***** -->
+			<hbox id="g_panelLoading" frameName="g_panelLoading" hidden="true">
+				<progressmeter mode="undetermined"/>
+				<description id="g_panelLoadingName" value="Loading fileName.xul ..."/>
+			</hbox>
+			<!-- ***** g_codePanel ***** -->
+			<vbox id="g_codePanel" frameName="g_codePanel" hidden="true" flex="1">
+				<button id="g_codePanelButton" label="U P D A T E" oncommand="g_codePanelUpdate();"/>
+				<textbox id="g_codePanelText" multiline="true" wrap="off" style="font-family:monospace; font-size:small; overflow: auto" flex="1"/>
+			</vbox>
+			<!-- ***** deviceid ***** -->
+			<vbox id="deviceid" frameName="deviceid" hidden="true" flex="1" style="overflow: auto">
+				<description style="font-size:large">Device Identity</description>
+				<hbox>
+					<vbox>
+						<spacer height="10"/>
+						<hbox align="center">
+							<label style="width:8em" value="Vendor Name:*"/>
+							<textbox id="deviceid_vendorName"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("vendorName", "The vendorName (mandatory) element identifies the name or the brand name of the vendor of the device.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Vendor ID:"/>
+							<textbox id="deviceid_vendorID"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("vendorID", "The vendorID element identifies the vendor. This information has to be filled in when the device described is recognized and validated by a consortium.\nNOTE: Consortia specific device families and vendor identifiers are linked.");'/>
+						</hbox>
+						<hbox align="center">
+							<button label="Edit Vendor Text" flex="1" image="pict/question.png" oncommand='g_labelEdit("deviceIdentity.vendorText", "Edit Vendor Text");'/>
+							<image src="pict/question.png" onclick='g_labelDisplay("vendorText", "The vendorText element allows the vendor to provide additional company information, like address or hotline number. The g_labels group offers the possibility to include a vendor URI inside the vendorText element.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Product Name:*"/>
+							<textbox id="deviceid_productName"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("productName", "The productName (mandatory) element states a vendor specific designation or name of the device type.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Product Family:"/>
+							<textbox id="deviceid_productFamily"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("productFamily", "The productFamily element states a vendor specific affiliation of the device type to a certain set of devices inside a family. The list of valid productFamily values is system, tool or consortia specific.\nNOTE: Consortia specific device families and vendor identifiers are linked.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Product ID:"/>
+							<textbox id="deviceid_productID"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("productID", "The productID element states a vendor specific unique identification for the device type described.");'/>
+						</hbox>
+						<hbox align="center">
+							<button label="Edit Product Text" flex="1" image="pict/question.png" oncommand='g_labelEdit("deviceIdentity.productText", "Edit Product Text");'/>
+							<image src="pict/question.png" onclick='g_labelDisplay("productText", "The productText element allows the vendor to provide a short textual description of the device type.");'/>
+						</hbox>
+						<hbox align="center">
+							<button label="Edit Device Family" flex="1" image="pict/question.png" oncommand='g_labelEdit("deviceIdentity.deviceFamily", "Edit Device Family");'/>
+							<image src="pict/question.png" onclick='g_labelDisplay("deviceFamily", "The deviceFamily element states the family of the device. Examples for device families are:\n- Variable Speed Drive\n- Circuit Breaker\n- Pressure Sensor");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Build Date:"/>
+							<textbox id="deviceid_buildDate" tooltiptext="YYYY-MM-DD"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("buildDate", "The buildDate element specifies the build date of the software unit (YYYY-MM-DD).");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Spec. Revision:"/>
+							<textbox id="deviceid_specificationRevision"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("specificationRevision", "The specificationRevision element contains the revision of the specification, to which this device conforms.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:8em" value="Instance Name:"/>
+							<textbox id="deviceid_instanceName"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("instanceName", "The instanceName element contains the instance name of the device.");'/>
+						</hbox>
+					</vbox>
+					<spacer width="20"/>
+					<vbox>
+						<groupbox>
+							<caption label="Order Number" image="pict/question.png" dir="reverse" onclick='g_labelDisplay("orderNumber", "The orderNumber element is used to store the single order number of a given device or the set of different order numbers of the products of a device family, depending upon whether the device profile describes a device or a device family.");'/>
+							<listbox id="deviceid_orderNumber" rows="2">
+								<listcols>
+									<listcol flex="1"/>
+								</listcols>
+								<listhead>
+									<listheader label="Order Number"/>
+								</listhead>
+							</listbox>
+							<hbox>
+								<textbox id="deviceid_orderNumberTb" flex="1"/>
+							</hbox>
+							<hbox>
+								<button label="Insert new" flex="1" oncommand='var text = document.getElementById("deviceid_orderNumberTb"); if(text.value) document.getElementById("deviceid_orderNumber").appendItem(text.value); text.value=""'/>
+								<button label="Delete selected" oncommand='var box = document.getElementById("deviceid_orderNumber"); if(box.selectedIndex>=0) box.removeItemAt(box.selectedIndex)'/>
+							</hbox>
+						</groupbox>
+						<groupbox>
+							<caption label="Version" image="pict/question.png" dir="reverse" onclick='g_labelDisplay("version", "The version element is used to store different types of version information. Multiple version elements are possible. Type of version:\n- SW - Software\n- FW - Firmware\n- HW - Hardware");'/>
+							<listbox id="deviceid_version" rows="3">
+								<listcols>
+									<listcol width="60"/>
+									<listcol flex="1"/>
+								</listcols>
+								<listhead>
+									<listheader label="Type"/>
+									<listheader label="Version"/>
+								</listhead>
+							</listbox>
+							<hbox>
+								<menulist id="deviceid_versionType" width="60">
+									<menupopup>
+										<menuitem label="SW"/>
+										<menuitem label="FW"/>
+										<menuitem label="HW"/>
+									</menupopup>
+								</menulist>
+								<textbox id="deviceid_versionVersion" flex="1"/>
+							</hbox>
+							<hbox>
+								<button label="Insert new" flex="1" oncommand='var text1 = document.getElementById("deviceid_versionType"); var text2 = document.getElementById("deviceid_versionVersion"); if(text2.value) document.getElementById("deviceid_version").appendChild(g_createListitem([text1.label, text2.value])); text2.value=""'/>
+								<button label="Delete selected" oncommand='var box = document.getElementById("deviceid_version"); if(box.selectedIndex>=0) box.removeItemAt(box.selectedIndex)'/>
+							</hbox>
+						</groupbox>
+					</vbox>
+				</hbox>
+				<spacer height="20"/>
+				<hbox>
+					<button label="U P D A T E   D E V I C E   I D E N T I T Y" width="490" style="font-weight:bold;font-size:small" oncommand="deviceidUpdate();"/>
+					<spacer flex="1"/>
+				</hbox>
+			</vbox>
+			<!-- ***** feature ***** -->
+			<vbox id="feature" frameName="feature" hidden="true" flex="1" style="overflow: auto">
+				<hbox>
+					<vbox>
+						<hbox>
+							<description style="font-size:large">Feature edit</description>
+							<spacer width="50"/>
+							<vbox>
+								<button label="Add new feature" oncommand="featureUpdateOrInsertNew(true);"/>
+								<button label="Delete this feature" oncommand="if(confirm('Are you sure, you want to permanently delete this feature?\n\n(You may want only to set the value to 0?)')){delete g_project.features.feature[feature.curent.childIndex()]; g_createTree(true);}"/>
+							</vbox>
+						</hbox>
+						<spacer height="20"/>
+						<hbox align="center">
+							<label style="width:3em" value="Name:"/>
+							<textbox id="feature_name" flex="1"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Feature name", "The Feature name must be unique.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:3em" value="Value:"/>
+							<textbox id="feature_value" flex="1"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Feature value", "Value 0 disables the feature (and also disables associated objects). See Feature description for more information about valid values for specific feature.");'/>
+						</hbox>
+						<hbox align="center">
+							<button label="Edit Description" flex="1" image="pict/question.png" oncommand='g_labelEdit("feature.curent", "Edit Feature Description");'/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Feature Description", "Description for complete feature, including all associated objects. Here should be also information about the valid values for the feature.");'/>
+						</hbox>
+						<groupbox>
+							<caption label="Associated Objects" image="pict/question.png" dir="reverse" onclick='g_labelDisplay("Associated Objects", "Here is the list of all associated objects from Object Dictionary. Associated are all objects between Index and Max Index. Feature value tells how many objects are used from that range. Objects are automatically added/removed if feature value is changed. \nNOTE: Too large range between Index and Index Max slows down the creation of the tree.");'/>
+							<listbox id="feature_objects" rows="3">
+								<listcols>
+									<listcol width="100"/>
+									<listcol width="100"/>
+									<listcol width="100"/>
+								</listcols>
+								<listhead>
+									<listheader label="Index"/>
+									<listheader label="Max Index"/>
+									<listheader label="Index step"/>
+								</listhead>
+							</listbox>
+							<hbox align="center">
+								<textbox id="feature_index" width="95"/>
+								<textbox id="feature_indexMax" width="95"/>
+								<textbox id="feature_indexStep" width="90"/>
+							</hbox>
+							<hbox>
+								<button label="Insert new" flex="1" oncommand="featureInsertNewObject();"/>
+								<button label="Delete selected" oncommand='var box = document.getElementById("feature_objects"); if(box.selectedIndex>=0) box.removeItemAt(box.selectedIndex)'/>
+							</hbox>
+						</groupbox>
+						<spacer height="20"/>
+						<button label="U P D A T E   F E A T U R E" style="font-weight:bold;font-size:small" oncommand="featureUpdateOrInsertNew();"/>
+					</vbox>
+				</hbox>
+				<hbox flex="1"/>
+			</vbox>
+			<!-- ***** object ***** -->
+			<vbox id="object" frameName="object" hidden="true" flex="1" style="overflow: auto">
+				<hbox>
+					<vbox>
+						<description style="font-size:large" value="Object edit"/>
+						<description id="object_index" class="indent" style="font-size:medium;font-weight:bold"/>
+					</vbox>
+					<spacer width="50"/>
+					<vbox>
+						<spacer flex="1"/>
+						<button label="Add new Object..." oncommand="objectUpdateOrInsertNew(true);"/>
+					</vbox>
+					<spacer width="50"/>
+					<vbox>
+						<button id="object_buttonDisEn" flex="1" oncommand="var feature = g_projectFeatures[document.getElementById('object_index').value]; if(feature){alert('This object is controlled by feature '+feature+'.\nPlease edit the feature!');} else{var dis=false; if(this.label=='Disable this Object') dis=true; object.curent.@disabled = dis; g_createTree();}"/>
+						<button label="Permanently delete this Object" oncommand="var feature = g_projectFeatures[document.getElementById('object_index').value]; if(feature &amp;&amp; !(object.curent.@disabled=='true')){alert('This object is controlled by feature '+feature+'.\nPlease edit the feature!');} else{if(confirm('If there is no special need, it is better to only disable the object, instead of permanently deleting it.\n\nAre you sure, you want to delete this object permanently?')){delete g_project.CANopenObjectList.children()[object.curent.childIndex()]; g_createTree();}}"/>
+					</vbox>
+				</hbox>
+				<spacer height="20"/>
+				<hbox>
+					<vbox>
+						<hbox align="center">
+							<label style="width:7em" value="Name:"/>
+							<textbox id="object_name" flex="1"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Object Name", "The name of the object must be unique. It will be used in the tree. The same name will be used also for variable, when C source code for the stack will be generated. Variable will have prefix \"ODE_\" and all spaces will be replaced by \"_\".");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Object Type:"/>
+							<menulist id="object_objectType" flex="1" onblur="objectTypeChanged();">
+								<menupopup>
+									<menuitem label="7 - Var"/>
+									<menuitem label="8 - Array"/>
+									<menuitem label="9 - Record"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick='g_labelDisplay("Object Type", "The object code shall denote what kind of object is at that particular index within the object dictionary. The following definitions are used:\n - NULL(00h) - An object with no data fields.\n - DOMAIN(02h) - Large variable amount of data e.g. executable program code.\n - DEFTYPE(05h) - Denotes a type definition such as a BOOLEAN, UNSIGNED16, FLOAT and so on.\n - DEFSTRUCT(06h) - Defines a new record type e.g. the PDO mapping structure at 21h.\n - VAR(07h) - A single value such as an UNSIGNED8, BOOLEAN, FLOAT, INTEGER16, VISIBLE STRING etc.\n - ARRAY(08h) - A multiple data field object where each data field is a simple variable of the SAME basic data type e.g. array of UNSIGNED16 etc. Sub-index 0 is of UNSIGNED8 and therefore not part of the ARRAY data.\n - RECORD(09h) - A multiple data field object where the data fields may be any combination of simple variables. Sub-index 0 is of UNSIGNED8 and sub-index 255 is of UNSIGNED32 and therefore not part of the RECORD data.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Sub Number:"/>
+							<textbox id="object_subNumber" flex="1"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Sub Number", "Number of sub-objects of the object. It is used only, if Object Type is Array or Record. Valid value range is from 2 to 255 (256). Number of sub-objects is stored in the first sub-object.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Memory Type:"/>
+							<menulist id="object_memoryType" flex="1">
+								<menupopup>
+									<menuitem label="RAM"/>
+									<menuitem label="EEPROM"/>
+									<menuitem label="ROM"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick='g_labelDisplay("Memory Type", "Memory type is CANopenNode specific. Each Object can be located in one of the three memory segments of the microcontroller:\n - RAM\n - EEPROM\n - ROM\n\n\nRAM variables are for general use. On startup they have initial value. They can be changed by application or from network side (by SDO communication).\n\nEEPROM variables are retentive (value is retained, if power supply is disconnected). They can be changed by application or from network side. Access is fast, memory resources are limited. Example use: counter of events.\n\nROM variables are retentive. They can NOT be changed by application (directly), but can be changed from network side. Application can read them normally. Writing to variable takes some time, memory resources are large. Example use: for configuration parameters.\n   \nOn different chips there are different strategies, how to handle retentive variables. PIC and dsPIC flash devices have possibility to use flash (program) memory for variables. Flash can be reprogrammed in run-time, so ROM variables are writeable. And NO RAM is used for them. On the other hand SC1xx chip (similar as PC) loads execution program in RAM memory and also all variables are there. ROM variables are there saved in file system.\n\nSee also description for feature \"Retentive usage\".");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Data Type:"/>
+							<menulist id="object_dataType" flex="1">
+								<menupopup>
+									<menuitem label="01 - BOOLEAN" disabled="true"/>
+									<menuitem label="02 - INTEGER8"/>
+									<menuitem label="03 - INTEGER16"/>
+									<menuitem label="04 - INTEGER32"/>
+									<menuitem label="05 - UNSIGNED8"/>
+									<menuitem label="06 - UNSIGNED16"/>
+									<menuitem label="07 - UNSIGNED32"/>
+									<menuitem label="08 - REAL32"/>
+									<menuitem label="09 - VISIBLE_STRING"/>
+									<menuitem label="0A - OCTET_STRING"/>
+									<menuitem label="0B - UNICODE_STRING"/>
+									<menuitem label="0C - TIME_OF_DAY"/>
+									<menuitem label="0D - TIME_DIFFERENCE"/>
+									<menuitem label="0E - (reserved)" disabled="true"/>
+									<menuitem label="0F - DOMAIN"/>
+									<menuitem label="10 - INTEGER24"/>
+									<menuitem label="11 - REAL64"/>
+									<menuitem label="12 - INTEGER40"/>
+									<menuitem label="13 - INTEGER48"/>
+									<menuitem label="14 - INTEGER56"/>
+									<menuitem label="15 - INTEGER64"/>
+									<menuitem label="16 - UNSIGNED24"/>
+									<menuitem label="17 - (reserved)" disabled="true"/>
+									<menuitem label="18 - UNSIGNED40"/>
+									<menuitem label="19 - UNSIGNED48"/>
+									<menuitem label="1A - UNSIGNED56"/>
+									<menuitem label="1B - UNSIGNED64"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick="g_labelDisplay('Data Type', 'Data type is used in the following way in the C source code:\n - BOOLEAN(01h) - not supported\n - INTEGER8(02h) - char\n - INTEGER16(03h) - short int\n - INTEGER32(04h) - long\n - UNSIGNED8(05h) - unsigned char\n - UNSIGNED16(06h) - unsigned short int\n - UNSIGNED32(07h) - unsigned long\n - REAL32(08h) - float\n - VISIBLE_STRING(09h) - char []\n - OCTET_STRING(0Ah) - unsigned char []\n - DOMAIN(0Fh) - application defined access\n - REAL64(11h) - double (long double)\n - INTEGER64(15h) - long long\n - UNSIGNED64(1Bh) - unsigned long long\n\nVISIBLE_STRING is shown in text fields as usual string.\nOCTET_STRING is shown in text fields with separate bytes represented by two hex digits. Between neighbour bytes may be a space. Example value for 5 byte long variable: \'11 AA BB 00 01\' or \'11AABB0001\'.\nVariable size for Visible or Octet string is calculated from length of Default value.\n\nIf Object Type is Array, then Data Type is valid for all subobjects (except first). If Object Type is Record, then Data Type is defined by each subobject, here has no meaning.');"/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Access Type:"/>
+							<menulist id="object_accessType" flex="1">
+								<menupopup>
+									<menuitem label="const"/>
+									<menuitem label="ro"/>
+									<menuitem label="wo"/>
+									<menuitem label="rw"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick='g_labelDisplay("Access Type", "Access type of the object; valid values:\n - const - read access only; the value is not changing\n - ro - read access only\n - wo - write access only\n - rw - both read and write access\n\nIf Object Type is Array, then Access Type is valid for all subobjects (except first, which is ro). If Object Type is Record, then Access Type is defined by each subobject, here has no meaning.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="PDO mapping:"/>
+							<menulist id="object_PDOmapping" flex="1">
+								<menupopup>
+									<menuitem label="no"/>
+									<menuitem label="default" disabled="true"/>
+									<menuitem label="optional"/>
+									<menuitem label="TPDO"/>
+									<menuitem label="RPDO"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick="g_labelDisplay('PDO mapping', 'PDO mapping of the object; valid values:\n - no - not mappable\n - default - Object is part of the default mapping (see device profile or application profile). Not supported by CANopenNode.\n - optional - Object may be mapped into a PDO\n - TPDO - may be mapped into TPDO only\n - RPDO - may be mapped into RPDO only\n\nIf Object Type is Array, then PDO mapping is valid for all subobjects (except first, which is no). If Object Type is Record, then PDO mapping is defined by each subobject, here has no meaning.\n\nPDO mapping is not possible if Memory Type is ROM. It is also not possible, if SDO Server access function is External.\n\nVariable can be mapped into TPDO, if access type is \'const\', \'ro\' or \'rw\'. Variable can be mapped into RPDO, if access type is \'wo\' or \'rw\'.');"/>
+						</hbox>
+						<hbox align="center">
+							<label value="TPDO detect Change of State:"/>
+							<spacer flex="1"/>
+							<checkbox id="object_TPDOdetectCOS"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("TPDO detect Change of State", "This feature is CANopenNode specific.\n\nIf this checkbox is set and if variable is mapped to any PDO, then PDO is automatically send, if variable changes its value and transmission type of the PDO is 254 or 255.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Default value:"/>
+							<textbox id="object_defaultValue" flex="1" onblur="this.value = g_validateValue(this.value, document.getElementById('object_dataType').label);"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Default value", "Default value of the object, if Object Type is Var. If Object Type is Array or Record, then Default value is defined by each subobject, here has no meaning.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Actual value:"/>
+							<textbox id="object_actualValue" flex="1" onblur="if(this.value) this.value = g_validateValue(this.value, document.getElementById('object_dataType').label);"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Actual value", "Actual value of the object, if Object Type is Var. If Object Type is Array or Record, then Actual value is defined by each subobject, here has no meaning.");'/>
+						</hbox>
+						<hbox align="center">
+							<button label="Edit Description" flex="1" image="pict/question.png" oncommand='g_labelEdit("object.curent", "Edit Object Description");'/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Object Description", "Description for the object, including all sub-objects. This description is CANopenNode specific.");'/>
+						</hbox>
+						<spacer height="20"/>
+						<button label="U P D A T E   O B J E C T" style="font-weight:bold;font-size:small" oncommand="objectUpdateOrInsertNew();"/>
+					</vbox>
+					<spacer width="20"/>
+					<groupbox orient="vertical" flex="1" hidden="true">
+						<caption label="SDO Server access function" image="pict/question.png" dir="reverse" onclick='g_labelDisplay("SDO Server access function", "This feature is CANopenNode specific.\n\nDefault SDO Server access function is CO_ODF().\n\nIf function is external, then object can not be dynamically mapped into PDO.\n\nDefault with user code function is simple, because function code can be entered directly in this editor. \nFor example, verify high and low limit of 16 bit integer variable. Write following code in upper text box:\nif(dir == 1)  //Writing Object Dictionary variable\n{\n  int var = *((int*)dataBuff);\n  if(var &lt; 5) return 0x06090032L;\n  if(var &gt; 15) return 0x06090031L;\n}");'/>
+						<radiogroup id="object_accessFunction" flex="1">
+							<radio label="Default" selected="true" oncommand="document.getElementById('object_accessFunctionCode').hidden = true; document.getElementById('object_accessFunctionNameBox').hidden = true;" />
+							<radio label="External" oncommand="document.getElementById('object_accessFunctionCode').hidden = true; document.getElementById('object_accessFunctionNameBox').hidden = false;" />
+							<hbox align="center" id="object_accessFunctionNameBox" hidden="true">
+								<label value="Function Name:"/>
+								<textbox id="object_accessFunctionName" flex="1" class="monospace" tooltiptext="CO_ODF_yourName"/>
+							</hbox>
+							<radio label="Default with user code:" oncommand="document.getElementById('object_accessFunctionCode').hidden = false; document.getElementById('object_accessFunctionNameBox').hidden = true;" />
+						</radiogroup>
+						<vbox id="object_accessFunctionCode" hidden="true">
+							<description value="UNSIGNED32 CO_ODF(void *object, UNSIGNED16 index, UNSIGNED8 subIndex, UNSIGNED8 length, UNSIGNED8 attribute, UNSIGNED8 dir, void *dataBuff, const void *pData){UNSIGNED32 abortCode;" crop="end" style="font-size:small" class="monospace"/>
+							<textbox id="object_accessFunctionPreCode" multiline="true" rows="4" flex="1" class="monospace"/>
+							<description value="abortCode = CO_ODF(object, index, subIndex, length, attribute, dir, dataBuff, pData);" crop="end" style="font-size:small" class="monospace"/>
+							<textbox id="object_accessFunctionPostCode" multiline="true" rows="4" flex="1" class="monospace"/>
+							<description value="return abortCode;}" style="font-size:small" class="monospace"/>
+						</vbox>
+					</groupbox>
+				</hbox>
+			</vbox>
+			<!-- ***** subobj ***** -->
+			<vbox id="subobj" frameName="subobj" hidden="true" flex="1" style="overflow: auto">
+				<hbox>
+					<vbox>
+						<description style="font-size:large" value="Sub-Object edit"/>
+						<description id="subobj_index" class="indent" style="font-size:medium;font-weight:bold"/>
+					</vbox>
+				</hbox>
+				<spacer height="20"/>
+				<hbox>
+					<vbox>
+						<hbox align="center">
+							<label style="width:7em" value="Name:"/>
+							<textbox id="subobj_name" flex="1"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Sub-Object Name", "If parent Object has Object Type = Record, then the name of the subobj must be unique inside object.\nIn case of Array it is not necessary.\nSub-Object Name will be used in the tree. The same name will be used also for variable, when C source code for the stack will be generated. Variable will have prefix \"ODE_\" and all spaces will be replaced by \"_\".");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Object Type:"/>
+							<textbox flex="1" value="7 - Var" readonly="true"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Object Type", "For Sub objects it is always 7");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Data Type:"/>
+							<menulist id="subobj_dataType" flex="1">
+								<menupopup>
+									<menuitem label="01 - BOOLEAN" disabled="true"/>
+									<menuitem label="02 - INTEGER8"/>
+									<menuitem label="03 - INTEGER16"/>
+									<menuitem label="04 - INTEGER32"/>
+									<menuitem label="05 - UNSIGNED8"/>
+									<menuitem label="06 - UNSIGNED16"/>
+									<menuitem label="07 - UNSIGNED32"/>
+									<menuitem label="08 - REAL32"/>
+									<menuitem label="09 - VISIBLE_STRING"/>
+									<menuitem label="0A - OCTET_STRING"/>
+									<menuitem label="0B - UNICODE_STRING"/>
+									<menuitem label="0C - TIME_OF_DAY"/>
+									<menuitem label="0D - TIME_DIFFERENCE"/>
+									<menuitem label="0E - (reserved)" disabled="true"/>
+									<menuitem label="0F - DOMAIN"/>
+									<menuitem label="10 - INTEGER24"/>
+									<menuitem label="11 - REAL64"/>
+									<menuitem label="12 - INTEGER40"/>
+									<menuitem label="13 - INTEGER48"/>
+									<menuitem label="14 - INTEGER56"/>
+									<menuitem label="15 - INTEGER64"/>
+									<menuitem label="16 - UNSIGNED24"/>
+									<menuitem label="17 - (reserved)" disabled="true"/>
+									<menuitem label="18 - UNSIGNED40"/>
+									<menuitem label="19 - UNSIGNED48"/>
+									<menuitem label="1A - UNSIGNED56"/>
+									<menuitem label="1B - UNSIGNED64"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick="g_labelDisplay('Data Type', 'See descriptoin for Objects.');"/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Access Type:"/>
+							<menulist id="subobj_accessType" flex="1">
+								<menupopup>
+									<menuitem label="const"/>
+									<menuitem label="ro"/>
+									<menuitem label="wo"/>
+									<menuitem label="rw"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick='g_labelDisplay("Access Type", "See descriptoin for Objects.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="PDO mapping:"/>
+							<menulist id="subobj_PDOmapping" flex="1">
+								<menupopup>
+									<menuitem label="no"/>
+									<menuitem label="default" disabled="true"/>
+									<menuitem label="optional"/>
+									<menuitem label="TPDO"/>
+									<menuitem label="RPDO"/>
+								</menupopup>
+							</menulist>
+							<image src="pict/question.png" onclick="g_labelDisplay('PDO mapping', 'See descriptoin for Objects.');"/>
+						</hbox>
+						<hbox align="center">
+							<label value="TPDO detect Change of State:"/>
+							<spacer flex="1"/>
+							<checkbox id="subobj_TPDOdetectCOS"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("TPDO detect Change of State", "See descriptoin for Objects.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Default value:"/>
+							<textbox id="subobj_defaultValue" flex="1" onblur="this.value = g_validateValue(this.value, document.getElementById('subobj_dataType').label);"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Default value", "See descriptoin for Objects.");'/>
+						</hbox>
+						<hbox align="center">
+							<label style="width:7em" value="Actual value:"/>
+							<textbox id="subobj_actualValue" flex="1" onblur="if(this.value) this.value = g_validateValue(this.value, document.getElementById('subobj_dataType').label);"/>
+							<image src="pict/question.png" onclick='g_labelDisplay("Actual value", "See descriptoin for Objects.");'/>
+						</hbox>
+						<spacer height="20"/>
+						<button label="U P D A T E   S U B O B J E C T" style="font-weight:bold;font-size:small" oncommand="subobjUpdate();"/>
+					</vbox>
+				</hbox>
+			</vbox>
+			<!--********** END OF PANELS ***********************************************************************************************-->
+		</vbox>
+		<splitter collapse="none"/>
+		<groupbox orient="vertical" id="g_infoWindow" width="200" persist="width" hidden="true">
+			<caption id="g_infoWindowCaption" label="Info"/>
+			<hbox id="g_infoWindowLanguageBox" align="center">
+				<label value="Language:"/>
+				<radiogroup id="g_infoWindowLanguage" orient="horizontal" oncommand="g_labelEdit();">
+					<radio label="en" selected="true"/>
+				</radiogroup>
+				<button id="g_infoWindowAddLang" label="add..." oncommand="g_labelAddLanguage();"/>
+			</hbox>
+			<textbox id="g_infoWindowLabelText" style="font-size:medium;font-weight:bold"/>
+			<textbox id="g_infoWindowDescText" multiline="true" flex="1" style="font-family: serif; font-size: medium"/>
+			<hbox id="g_infoWindowURIBox" align="center">
+				<label value="URI:"/>
+				<textbox id="g_infoWindowURIText" flex="1"/>
+			</hbox>
+			<hbox>
+				<button id="g_infoWindowButtonUpdate" label="Update" oncommand="g_labelEditUpdate();" hidden="true"/>
+				<button id="g_infoWindowButtonMore" label="more ..." disabled="true"/>
+				<button label="Close" oncommand="document.getElementById('g_infoWindow').hidden = 'true';"/>
+			</hbox>
+		</groupbox>
+	</hbox>
+
+</vbox>
+
+</hbox>
+</window>

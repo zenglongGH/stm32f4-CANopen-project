@@ -1,7 +1,7 @@
-stm32f4-empty-project
+stm32f4-CANopen-project
 =====================
 
-An empty project with all the boilerplate to start developing with stm32f4.
+An empty project with all the boilerplate to start developing with stm32f4 and canopen-node
 
 Change the output file name in app/module.mk
 

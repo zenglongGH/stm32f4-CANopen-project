@@ -1,0 +1,11 @@
+#ignore build output
+
+*.o
+*.d
+*.a
+*.so
+*~
+
+#ignore vim temp files
+*.swp
+*.swo
